@@ -103,6 +103,7 @@ class _RegisterPhoneScreenState extends State<RegisterPhoneScreen> {
       appBar: AppBar(title: const Text("Verify Phone"), elevation: 0),
       body: Padding(
         padding: const EdgeInsets.all(24.0),
+        child: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -135,6 +136,7 @@ class _RegisterPhoneScreenState extends State<RegisterPhoneScreen> {
               ),
             ),
           ],
+        ),
         ),
       ),
     );
