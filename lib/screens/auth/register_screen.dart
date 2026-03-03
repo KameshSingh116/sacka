@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../services/auth_service.dart';
-import '../root/root_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
   final VoidCallback onToggleTheme;
@@ -15,78 +14,102 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _formKey = GlobalKey<FormState>();
   final email = TextEditingController();
   final password = TextEditingController();
-  bool rememberMe = true;
+  String error = '';
 
   @override
   Widget build(BuildContext context) {
+    final orange = Colors.deepOrange;
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Register')),
-      body: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            children: [
-              TextFormField(
-                controller: email,
-                decoration:
-                const InputDecoration(labelText: 'Email'),
-                validator: (v) =>
-                v != null && v.contains('@')
-                    ? null
-                    : 'Invalid email',
-              ),
-              const SizedBox(height: 16),
-
-              TextFormField(
-                controller: password,
-                obscureText: true,
-                decoration:
-                const InputDecoration(labelText: 'Password'),
-                validator: (v) =>
-                v != null && v.length >= 6
-                    ? null
-                    : 'Min 6 chars',
-              ),
-
-              Row(
-                children: [
-                  Checkbox(
-                    value: rememberMe,
-                    onChanged: (v) {
-                      setState(() => rememberMe = v!);
-                    },
-                  ),
-                  const Text('Stay logged in'),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(24),
+              gradient: LinearGradient(
+                colors: [
+                  orange.withOpacity(0.25),
+                  orange.withOpacity(0.08),
                 ],
               ),
+              boxShadow: [
+                BoxShadow(
+                  color: orange.withOpacity(0.4),
+                  blurRadius: 30,
+                ),
+              ],
+            ),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    'Create Account',
+                    style: TextStyle(
+                        fontSize: 24, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 24),
 
-              const SizedBox(height: 24),
+                  TextFormField(
+                    controller: email,
+                    decoration:
+                    const InputDecoration(labelText: 'Email'),
+                    validator: (v) =>
+                    v != null && v.contains('@')
+                        ? null
+                        : 'Invalid email',
+                  ),
+                  const SizedBox(height: 16),
 
-              ElevatedButton(
-                onPressed: () async {
-                  if (!_formKey.currentState!.validate())
-                    return;
+                  TextFormField(
+                    controller: password,
+                    obscureText: true,
+                    decoration:
+                    const InputDecoration(labelText: 'Password'),
+                    validator: (v) =>
+                    v != null && v.length >= 6
+                        ? null
+                        : 'Min 6 characters',
+                  ),
 
-                  await AuthService.register(
-                    email.text,
-                    password.text,
-                    rememberMe,
-                  );
-
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => RootScreen(
-                        onToggleTheme:
-                        widget.onToggleTheme,
+                  if (error.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: Text(
+                        error,
+                        style:
+                        const TextStyle(color: Colors.red),
                       ),
                     ),
-                  );
-                },
-                child: const Text('Create Account'),
+
+                  const SizedBox(height: 24),
+
+                  ElevatedButton(
+                    onPressed: () async {
+                      if (!_formKey.currentState!.validate())
+                        return;
+
+                      final result =
+                      await AuthService.register(
+                        email.text,
+                        password.text,
+                      );
+
+                      if (result != null) {
+                        setState(() => error = result);
+                        return;
+                      }
+
+                      Navigator.pop(context); // back to login
+                    },
+                    child: const Text('Register'),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
       ),

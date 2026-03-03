@@ -67,7 +67,7 @@ class ToolCard extends StatelessWidget {
                           Text(tool.category),
                           const SizedBox(height: 8),
                           Text(
-                            '₹${tool.pricePerDay}/day',
+                            '₹${tool.pricePerDay}/hour',
                             style: const TextStyle(
                               fontWeight: FontWeight.bold,
                             ),

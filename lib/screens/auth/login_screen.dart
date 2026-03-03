@@ -15,126 +15,174 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen>
     with SingleTickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
-  final email = TextEditingController();
-  final password = TextEditingController();
-  bool rememberMe = true;
+  final emailController = TextEditingController();
+  final passwordController = TextEditingController();
+
   bool loading = false;
   String error = '';
 
-  late AnimationController _anim;
+  late AnimationController _fadeController;
 
   @override
   void initState() {
     super.initState();
-    _anim = AnimationController(
+    _fadeController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 700),
+      duration: const Duration(milliseconds: 600),
     )..forward();
   }
 
   @override
+  void dispose() {
+    _fadeController.dispose();
+    emailController.dispose();
+    passwordController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final orange = Colors.deepOrange;
+
     return Scaffold(
       body: FadeTransition(
-        opacity: _anim,
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Center(
-            child: SingleChildScrollView(
+        opacity: _fadeController,
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(24),
+                gradient: LinearGradient(
+                  colors: [
+                    orange.withOpacity(0.25),
+                    orange.withOpacity(0.08),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: orange.withOpacity(0.45),
+                    blurRadius: 30,
+                    spreadRadius: 2,
+                  ),
+                ],
+              ),
               child: Form(
                 key: _formKey,
                 child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     const Text(
-                      'SACKA',
+                      'Welcome Back',
                       style: TextStyle(
-                        fontSize: 32,
+                        fontSize: 26,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    const SizedBox(height: 32),
+                    const SizedBox(height: 6),
+                    const Text(
+                      'Login to continue renting',
+                      style: TextStyle(fontSize: 14),
+                    ),
+
+                    const SizedBox(height: 28),
 
                     TextFormField(
-                      controller: email,
-                      decoration:
-                      const InputDecoration(labelText: 'Email'),
-                      validator: (v) =>
-                      v != null && v.contains('@')
-                          ? null
-                          : 'Enter valid email',
+                      controller: emailController,
+                      keyboardType: TextInputType.emailAddress,
+                      decoration: const InputDecoration(
+                        labelText: 'Email',
+                      ),
+                      validator: (value) {
+                        if (value == null || !value.contains('@')) {
+                          return 'Enter a valid email';
+                        }
+                        return null;
+                      },
                     ),
                     const SizedBox(height: 16),
 
                     TextFormField(
-                      controller: password,
+                      controller: passwordController,
                       obscureText: true,
-                      decoration:
-                      const InputDecoration(labelText: 'Password'),
-                      validator: (v) =>
-                      v != null && v.length >= 6
-                          ? null
-                          : 'Min 6 characters',
-                    ),
-
-                    Row(
-                      children: [
-                        Checkbox(
-                          value: rememberMe,
-                          onChanged: (v) {
-                            setState(() => rememberMe = v!);
-                          },
-                        ),
-                        const Text('Remember me'),
-                      ],
+                      decoration: const InputDecoration(
+                        labelText: 'Password',
+                      ),
+                      validator: (value) {
+                        if (value == null || value.length < 6) {
+                          return 'Password must be at least 6 characters';
+                        }
+                        return null;
+                      },
                     ),
 
                     if (error.isNotEmpty)
-                      Text(error,
-                          style:
-                          const TextStyle(color: Colors.red)),
+                      Padding(
+                        padding: const EdgeInsets.only(top: 10),
+                        child: Text(
+                          error,
+                          style: const TextStyle(color: Colors.red),
+                        ),
+                      ),
 
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 24),
 
-                    ElevatedButton(
-                      onPressed: loading
-                          ? null
-                          : () async {
-                        if (!_formKey.currentState!
-                            .validate()) return;
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: loading
+                            ? null
+                            : () async {
+                          if (!_formKey.currentState!.validate()) {
+                            return;
+                          }
 
-                        setState(() {
-                          loading = true;
-                          error = '';
-                        });
+                          setState(() {
+                            loading = true;
+                            error = '';
+                          });
 
-                        final success =
-                        await AuthService.login(
-                          email.text,
-                          password.text,
-                          rememberMe,
-                        );
-
-                        setState(() => loading = false);
-
-                        if (success) {
-                          Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => RootScreen(
-                                onToggleTheme:
-                                widget.onToggleTheme,
-                              ),
-                            ),
+                          final success =
+                          await AuthService.login(
+                            emailController.text.trim(),
+                            passwordController.text.trim(),
                           );
-                        } else {
-                          setState(() =>
-                          error = 'Wrong credentials');
-                        }
-                      },
-                      child: loading
-                          ? const CircularProgressIndicator()
-                          : const Text('Login'),
+
+                          setState(() => loading = false);
+
+                          if (success) {
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => RootScreen(
+                                  onToggleTheme:
+                                  widget.onToggleTheme,
+                                ),
+                              ),
+                            );
+                          } else {
+                            setState(() {
+                              error =
+                              'Invalid email or password';
+                            });
+                          }
+                        },
+                        child: loading
+                            ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                          ),
+                        )
+                            : const Text('Login'),
+                      ),
                     ),
+
+                    const SizedBox(height: 12),
 
                     TextButton(
                       onPressed: () {
@@ -148,7 +196,9 @@ class _LoginScreenState extends State<LoginScreen>
                           ),
                         );
                       },
-                      child: const Text('Create account'),
+                      child: const Text(
+                        'New here? Create an account',
+                      ),
                     ),
                   ],
                 ),
