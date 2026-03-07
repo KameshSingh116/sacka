@@ -10,6 +10,8 @@ class AuthGuard {
     final loggedIn = await AuthService.isLoggedIn();
     if (loggedIn) return true;
 
+    if (!context.mounted) return false;
+
     await Navigator.push(
       context,
       MaterialPageRoute(

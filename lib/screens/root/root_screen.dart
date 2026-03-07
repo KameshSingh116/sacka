@@ -20,7 +20,7 @@ class _RootScreenState extends State<RootScreen> {
     final screens = [
       HomeScreen(onToggleTheme: widget.onToggleTheme),
       const AddItemScreen(),
-      const ProfileScreen(),
+      ProfileScreen(onToggleTheme: widget.onToggleTheme),
     ];
 
     return Scaffold(
@@ -28,10 +28,13 @@ class _RootScreenState extends State<RootScreen> {
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: index,
         onTap: (i) => setState(() => index = i),
+        selectedItemColor: Colors.deepOrange,
+        unselectedItemColor: Colors.grey,
+        type: BottomNavigationBarType.fixed,
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.add), label: 'Add'),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
+          BottomNavigationBarItem(icon: Icon(Icons.add_box_outlined), label: 'Add'),
+          BottomNavigationBarItem(icon: Icon(Icons.person_outline), label: 'Profile'),
         ],
       ),
     );

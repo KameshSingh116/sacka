@@ -1,9 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'core/theme.dart';
 import 'screens/root/root_screen.dart';
+import 'services/cart_service.dart';
 
 void main() {
-  runApp(const SackaApp());
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => CartService()),
+      ],
+      child: const SackaApp(),
+    ),
+  );
 }
 
 class SackaApp extends StatefulWidget {
