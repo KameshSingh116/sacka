@@ -1,12 +1,14 @@
 import 'package:firebase_auth/firebase_auth.dart';
 
 class AuthService {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+  static final FirebaseAuth _auth = FirebaseAuth.instance;
 
   // ---------------------------------------------------------
   // 1. EMAIL & PASSWORD AUTHENTICATION
   // ---------------------------------------------------------
-
+  static Future<bool> isLoggedIn() async {
+    return _auth.currentUser != null;
+  }
   // Sign Up with Email
   Future<UserCredential?> signUpWithEmail(String email, String password) async {
     try {
@@ -75,7 +77,7 @@ class AuthService {
   }
 
   // Log Out
-  Future<void> signOut() async {
+  static Future<void> logout() async {
     await _auth.signOut();
   }
 }

@@ -5,26 +5,24 @@
 // gestures. You can also use WidgetTester to find child widgets in the widget
 // tree, read text, and verify that the values of widget properties are correct.
 
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
 import 'package:tool_node/main.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  testWidgets('Machinery App launch smoke test', (WidgetTester tester) async {
+    // 🚀 Build our app and trigger a frame.
+    // This uses ShacaApp which points to RootScreen (the machinery list).
+    await tester.pumpWidget(const ShacaApp());
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    // ✅ Verify that the app title 'Shaca' is present in the AppBar.
+    expect(find.text('Shaca'), findsOneWidget);
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+    // ✅ Verify that the Bottom Navigation Bar items are present.
+    expect(find.text('Home'), findsOneWidget);
+    expect(find.text('Add'), findsOneWidget);
+    expect(find.text('Profile'), findsOneWidget);
 
-    // Verify that our counter has incremented.
+    // ✅ Verify that it does NOT show the old counter '0'.
     expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
   });
 }

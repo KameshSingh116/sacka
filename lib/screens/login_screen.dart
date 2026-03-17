@@ -6,6 +6,7 @@ import 'forgot_password_screen.dart';
 import 'register_screen.dart';
 import 'home_screen.dart';
 import 'otp_screen.dart';
+import 'root_screen.dart'; // 🛠️ Add this to the top imports
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -43,12 +44,11 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
           _passwordController.text.trim()
       );
 
-      // Success -> Go Home
       if (!mounted) return;
-      Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const HomeScreen())
-      );
+
+      // 🛠️ FIX: Explicitly target the absolute base route ('/') of the app!
+      RootScreen.tabNotifier.value = 0;
+      Navigator.popUntil(context, ModalRoute.withName('/'));
 
     } catch (e) {
       String errorMsg = e.toString();
@@ -61,11 +61,11 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
       else if (errorMsg.contains("wrong-password")) {
         _showCustomSnackBar(message: "Incorrect password. Please try again.", isError: true);
       }
-      // 3. BAD FORMAT (e.g. missing the '@')
+      // 3. BAD FORMAT
       else if (errorMsg.contains("invalid-email")) {
         _showCustomSnackBar(message: "Please enter a valid email address.", isError: true);
       }
-      // 4. FIREBASE SECURITY FALLBACK (If enumeration protection is ON)
+      // 4. FIREBASE SECURITY FALLBACK
       else if (errorMsg.contains("invalid-credential")) {
         _showCustomSnackBar(message: "Incorrect email or password.", isError: true);
       }
@@ -77,6 +77,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
       if (mounted) setState(() => _isLoading = false);
     }
   }
+
   // ----------------------------------------------------------------
   // 📱 PHONE LOGIN LOGIC (SMART UPGRADE)
   // ----------------------------------------------------------------
@@ -98,7 +99,6 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
           .get();
 
       if (userQuery.docs.isEmpty) {
-        // No user found! Stop the OTP and invite them to register.
         if (!mounted) return;
         setState(() => _isLoading = false);
         _showRegisterDialog("We couldn't find a ShaCa account for this number. Would you like to join your community?");
@@ -118,7 +118,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
               builder: (context) => OTPScreen(
                 verificationId: verificationId,
                 phoneNumber: fullPhoneNumber,
-                isLoginFlow: true, // This is a LOGIN
+                isLoginFlow: true,
               ),
             ),
           );
@@ -127,7 +127,6 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
           if (!mounted) return;
           setState(() => _isLoading = false);
 
-          // Catch Billing or Internal Errors gracefully
           String errorMsg = "Verification failed. Please try again.";
           if (error.message != null && error.message!.contains('BILLING')) {
             errorMsg = "Server Config: Enable Blaze Plan in Firebase.";
@@ -145,7 +144,6 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
   // ----------------------------------------------------------------
   // 🛠️ HELPER WIDGETS
   // ----------------------------------------------------------------
-
   void _showCustomSnackBar({required String message, required bool isError}) {
     Color accentColor = isError ? Colors.redAccent : const Color(0xFFFF8C00);
     IconData icon = isError ? Icons.error_outline : Icons.info_outline;
@@ -166,7 +164,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
             ),
           ],
         ),
-        backgroundColor: const Color(0xFF2C3E50), // Slate Grey Theme
+        backgroundColor: const Color(0xFF2C3E50),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         margin: const EdgeInsets.all(20),
@@ -190,7 +188,6 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
             style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFFF8C00)),
             onPressed: () {
               Navigator.pop(context);
-              // Navigate to Registration Screen
               Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => const RegisterScreen())
@@ -206,116 +203,116 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      // 🛠️ The ResizeToAvoidBottomInset ensures the screen shrinks above the keyboard
+      resizeToAvoidBottomInset: true,
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            children: [
-              const SizedBox(height: 40),
-              // Logo Area
-              const Icon(Icons.handyman_rounded, size: 60, color: Color(0xFFFF8C00)),
-              Text("ShaCa Login", style: Theme.of(context).textTheme.headlineMedium),
-              const SizedBox(height: 30),
+        child: Column(
+          children: [
+            const SizedBox(height: 40),
+            const Icon(Icons.handyman_rounded, size: 60, color: Color(0xFFFF8C00)),
+            Text("ShaCa Login", style: Theme.of(context).textTheme.headlineMedium),
+            const SizedBox(height: 30),
 
-              // Tabs
-              TabBar(
+            TabBar(
+              controller: _tabController,
+              labelColor: const Color(0xFFFF8C00),
+              unselectedLabelColor: Colors.grey,
+              indicatorColor: const Color(0xFFFF8C00),
+              tabs: const [
+                Tab(text: "Email Login"),
+                Tab(text: "Phone Login"),
+              ],
+            ),
+            const SizedBox(height: 20),
+
+            Expanded(
+              child: TabBarView(
                 controller: _tabController,
-                labelColor: const Color(0xFFFF8C00),
-                unselectedLabelColor: Colors.grey,
-                indicatorColor: const Color(0xFFFF8C00),
-                tabs: const [
-                  Tab(text: "Email Login"),
-                  Tab(text: "Phone Login"),
+                children: [
+                  // --- TAB 1: EMAIL ---
+                  SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(horizontal: 24.0), // 🛠️ Moved padding here
+                    child: Column(
+                      children: [
+                        TextField(
+                          controller: _emailController,
+                          decoration: const InputDecoration(labelText: "Email", prefixIcon: Icon(Icons.email_outlined)),
+                        ),
+                        const SizedBox(height: 16),
+                        TextField(
+                          controller: _passwordController,
+                          obscureText: true,
+                          decoration: const InputDecoration(labelText: "Password", prefixIcon: Icon(Icons.lock_outline)),
+                        ),
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: TextButton(
+                            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const ForgotPasswordScreen())),
+                            child: const Text("Forgot Password?"),
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        SizedBox(
+                          width: double.infinity,
+                          height: 50,
+                          child: ElevatedButton(
+                            onPressed: _isLoading ? null : _loginWithEmail,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFFFF8C00),
+                              foregroundColor: Colors.white,
+                            ),
+                            child: _isLoading ? const CircularProgressIndicator(color: Colors.white) : const Text("Login with Email"),
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        TextButton(
+                          onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const RegisterScreen())),
+                          child: const Text("Don't have an account? Sign Up", style: TextStyle(color: Color(0xFF2C3E50))),
+                        ),
+                        const SizedBox(height: 40), // 🛠️ Extra space at the bottom for keyboard comfort
+                      ],
+                    ),
+                  ),
+
+                  // --- TAB 2: PHONE ---
+                  SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(horizontal: 24.0), // 🛠️ Moved padding here
+                    child: Column(
+                      children: [
+                        const SizedBox(height: 20),
+                        const Text("We will send an OTP to verify your number."),
+                        const SizedBox(height: 20),
+                        TextField(
+                          controller: _phoneController,
+                          keyboardType: TextInputType.phone,
+                          decoration: const InputDecoration(
+                            labelText: "Phone Number",
+                            prefixText: "+91 ",
+                            prefixIcon: Icon(Icons.phone),
+                            border: OutlineInputBorder(),
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        SizedBox(
+                          width: double.infinity,
+                          height: 50,
+                          child: ElevatedButton(
+                            onPressed: _isLoading ? null : _loginWithPhone,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFFFF8C00),
+                              foregroundColor: Colors.white,
+                            ),
+                            child: _isLoading ? const CircularProgressIndicator(color: Colors.white) : const Text("Get OTP"),
+                          ),
+                        ),
+                        const SizedBox(height: 40), // 🛠️ Extra space at the bottom
+                      ],
+                    ),
+                  ),
                 ],
               ),
-              const SizedBox(height: 20),
-
-              // Tab Views
-              Expanded(
-                child: TabBarView(
-                  controller: _tabController,
-                  children: [
-                    // --- TAB 1: EMAIL ---
-                    SingleChildScrollView(
-                      child: Column(
-                        children: [
-                          TextField(
-                            controller: _emailController,
-                            decoration: const InputDecoration(labelText: "Email", prefixIcon: Icon(Icons.email_outlined)),
-                          ),
-                          const SizedBox(height: 16),
-                          TextField(
-                            controller: _passwordController,
-                            obscureText: true,
-                            decoration: const InputDecoration(labelText: "Password", prefixIcon: Icon(Icons.lock_outline)),
-                          ),
-                          Align(
-                            alignment: Alignment.centerRight,
-                            child: TextButton(
-                              onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const ForgotPasswordScreen())),
-                              child: const Text("Forgot Password?"),
-                            ),
-                          ),
-                          const SizedBox(height: 10),
-                          SizedBox(
-                            width: double.infinity,
-                            height: 50,
-                            child: ElevatedButton(
-                              onPressed: _isLoading ? null : _loginWithEmail,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFFFF8C00),
-                                foregroundColor: Colors.white,
-                              ),
-                              child: _isLoading ? const CircularProgressIndicator(color: Colors.white) : const Text("Login with Email"),
-                            ),
-                          ),
-                          const SizedBox(height: 20),
-                          TextButton(
-                            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const RegisterScreen())),
-                            child: const Text("Don't have an account? Sign Up", style: TextStyle(color: Color(0xFF2C3E50))),
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    // --- TAB 2: PHONE ---
-                    SingleChildScrollView(
-                      child: Column(
-                        children: [
-                          const SizedBox(height: 20),
-                          const Text("We will send an OTP to verify your number."),
-                          const SizedBox(height: 20),
-                          TextField(
-                            controller: _phoneController,
-                            keyboardType: TextInputType.phone,
-                            decoration: const InputDecoration(
-                              labelText: "Phone Number",
-                              prefixText: "+91 ",
-                              prefixIcon: Icon(Icons.phone),
-                              border: OutlineInputBorder(),
-                            ),
-                          ),
-                          const SizedBox(height: 20),
-                          SizedBox(
-                            width: double.infinity,
-                            height: 50,
-                            child: ElevatedButton(
-                              onPressed: _isLoading ? null : _loginWithPhone,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFFFF8C00),
-                                foregroundColor: Colors.white,
-                              ),
-                              child: _isLoading ? const CircularProgressIndicator(color: Colors.white) : const Text("Get OTP"),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

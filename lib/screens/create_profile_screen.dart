@@ -4,7 +4,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import '../services/database_service.dart';
 import '../services/location_service.dart';
-import 'home_screen.dart';
+import 'root_screen.dart';
 
 class CreateProfileScreen extends StatefulWidget {
   const CreateProfileScreen({super.key});
@@ -163,10 +163,12 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
       }
 
       // 6. Go to Home Screen
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const HomeScreen()),
-      );
+      // ✅ The fix: Send them to the RootScreen and destroy the back button history
+      // 1. Force the bottom navigation bar to switch to Tab 0 (Home)
+      RootScreen.tabNotifier.value = 0;
+
+      // 2. Pop all screens off the top until we reach the original RootScreen!
+      Navigator.popUntil(context, (route) => route.isFirst);
 
     } catch (e) {
       if (!mounted) return;

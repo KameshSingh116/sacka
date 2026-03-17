@@ -2,14 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'home_screen.dart';
 import 'create_profile_screen.dart';
+import 'root_screen.dart';
 
 class OTPScreen extends StatefulWidget {
   final String verificationId;
   final String phoneNumber;
   final bool isLoginFlow;
   final String? userName;
-  final String? email;     // <--- NEW
-  final String? password;  // <--- NEW
+  final String? email;
+  final String? password;
 
   const OTPScreen({
     super.key,
@@ -34,7 +35,8 @@ class _OTPScreenState extends State<OTPScreen> {
     String otp = _otpController.text.trim();
 
     if (otp.length != 6) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Please enter a valid 6-digit OTP")));
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Please enter a valid 6-digit OTP")));
       return;
     }
 
@@ -52,12 +54,10 @@ class _OTPScreenState extends State<OTPScreen> {
         await _auth.signInWithCredential(credential);
 
         if (!mounted) return;
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(builder: (context) => const HomeScreen()),
-              (route) => false,
-        );
 
+        // 🛠️ FIX: Explicitly target the absolute base route ('/') of the app!
+        RootScreen.tabNotifier.value = 0;
+        Navigator.popUntil(context, ModalRoute.withName('/'));
       } else {
         // --- PATH B: NEW REGISTRATION ---
 
@@ -79,18 +79,22 @@ class _OTPScreenState extends State<OTPScreen> {
           ),
         );
       }
-
     } on FirebaseAuthException catch (e) {
       if (!mounted) return;
       String message = "Authentication Failed.";
-      if (e.code == 'invalid-verification-code') message = "The code you entered is incorrect.";
-      if (e.code == 'credential-already-in-use') message = "This phone is linked to another account.";
-      if (e.code == 'email-already-in-use') message = "This email is already registered. Please go back to login.";
+      if (e.code == 'invalid-verification-code')
+        message = "The code you entered is incorrect.";
+      if (e.code == 'credential-already-in-use')
+        message = "This phone is linked to another account.";
+      if (e.code == 'email-already-in-use')
+        message = "This email is already registered. Please go back to login.";
 
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message), backgroundColor: Colors.red));
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(message), backgroundColor: Colors.red));
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error: $e"), backgroundColor: Colors.red));
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Error: $e"), backgroundColor: Colors.red));
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -100,41 +104,61 @@ class _OTPScreenState extends State<OTPScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text("Verify OTP"), elevation: 0),
-      body: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const Icon(Icons.message_rounded, size: 80, color: Color(0xFF2C3E50)),
-            const SizedBox(height: 20),
-            Text(
-              "Enter Verification Code",
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            Text("Sent to ${widget.phoneNumber}", textAlign: TextAlign.center, style: const TextStyle(color: Colors.grey)),
-            const SizedBox(height: 40),
-
-            TextField(
-              controller: _otpController,
-              keyboardType: TextInputType.number,
-              maxLength: 6,
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 24, letterSpacing: 8, fontWeight: FontWeight.bold),
-              decoration: const InputDecoration(counterText: "", border: OutlineInputBorder(), hintText: "000000"),
-            ),
-            const SizedBox(height: 30),
-
-            SizedBox(
-              height: 50,
-              child: ElevatedButton(
-                onPressed: _isLoading ? null : _verifyOTP,
-                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFFF8C00), foregroundColor: Colors.white),
-                child: _isLoading ? const CircularProgressIndicator(color: Colors.white) : const Text("Verify & Continue", style: TextStyle(fontSize: 16)),
+      // 🛠️ FIX: Center + SingleChildScrollView replaces the Padding wrapper
+      body: Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            // 🛠️ Centers items vertically
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Icon(
+                  Icons.message_rounded, size: 80, color: Color(0xFF2C3E50)),
+              const SizedBox(height: 20),
+              Text(
+                "Enter Verification Code",
+                textAlign: TextAlign.center,
+                style: Theme
+                    .of(context)
+                    .textTheme
+                    .headlineSmall
+                    ?.copyWith(fontWeight: FontWeight.bold),
               ),
-            ),
-          ],
+              const SizedBox(height: 8),
+              Text("Sent to ${widget.phoneNumber}", textAlign: TextAlign.center,
+                  style: const TextStyle(color: Colors.grey)),
+              const SizedBox(height: 40),
+
+              TextField(
+                controller: _otpController,
+                keyboardType: TextInputType.number,
+                maxLength: 6,
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 24,
+                    letterSpacing: 8,
+                    fontWeight: FontWeight.bold),
+                decoration: const InputDecoration(counterText: "",
+                    border: OutlineInputBorder(),
+                    hintText: "000000"),
+              ),
+              const SizedBox(height: 30),
+
+              SizedBox(
+                height: 50,
+                child: ElevatedButton(
+                  onPressed: _isLoading ? null : _verifyOTP,
+                  style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFFF8C00),
+                      foregroundColor: Colors.white),
+                  child: _isLoading ? const CircularProgressIndicator(
+                      color: Colors.white) : const Text(
+                      "Verify & Continue", style: TextStyle(fontSize: 16)),
+                ),
+              ),
+              const SizedBox(height: 40), // 🛠️ Safety buffer for the keyboard
+            ],
+          ),
         ),
       ),
     );
