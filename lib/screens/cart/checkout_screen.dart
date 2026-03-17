@@ -12,6 +12,7 @@ class CheckoutScreen extends StatefulWidget {
 
 class _CheckoutScreenState extends State<CheckoutScreen> {
   String selectedPaymentMethod = 'UPI';
+
   final _upiUsernameController = TextEditingController();
   
   final List<String> upiSuffixes = ['okaxis', 'oksbi', 'okicici', 'paytm', 'ybl', 'apl'];
